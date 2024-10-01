@@ -51,7 +51,7 @@ class Book:
   def check_availability(db, book_id):
     query='SELECT availability FROM books WHERE book_id=%s'
     result = db.fetch_all_data(query, (book_id,))
-    return result
+    return result[0][0] == 1
   
 
 # Member Class 
@@ -77,14 +77,52 @@ class Member:
 
     
 
+class Library:
+  @staticmethod
+  def borrow_book(db, member_id, book_id):
+    if Book.check_availability(db, book_id): # If Book is available 
+      query = 'INSERT INTO borrowed_books (member_id, book_id, borrow_date) VALUES (%s, %s, %s)'
+      db.execute(query, (member_id, book_id, date.today()))
+      update_query='UPDATE books SET availability = 0 WHERE book_id=%s'
+      db.execute(update_query, (book_id,))
+      return 'Borrowed book successfully'
+    else :
+      return 'Book is not availability'
+    
+  @staticmethod 
+  def return_book(db, borrow_id):
+    query= 'Select book_id from borrowed_books WHERE borrow_id=%s'
+    book_id = db.fetch_all_data(query, (borrow_id,))[0][0]
+    
+    update_query='UPDATE books SET availability = 1 WHERE book_id = %s'
+    db.execute(update_query, (book_id,))
+
+    return_query='UPDATE borrowed_books SET return_date=%s WHERE borrow_id=%s'
+    db.execute(return_query, (date.today(), borrow_id))
+    print("Book returned successfully!")
+
+  @staticmethod
+  def get_borrowed_books(db):
+    query = '''
+    SELECT books.title, members.name, borrowed_books.borrow_date
+    FROM borrowed_books
+    JOIN books ON borrowed_books.book_id = books.book_id
+    JOIN members ON borrowed_books.member_id = members.member_id
+    WHERE return_date IS NULL
+    '''
+    borrowed_books = db.fetch_all_data(query)
+    for book in borrowed_books:
+      print(f"Book: {book[0]}, Borrowed by: {book[1]}, Borrowed on: {book[2]}")
+
 db = Database()
 
 # Adding a new book
 new_book = Book("The Great Gatsby", "F. Scott Fitzgerald", "Fiction")
-new_book.add_book(db)
 
 # Adding a new member
 new_member = Member("John Doe", "johndoe@example.com", "123-456-7890")
-new_member.update_member(db, 1, 'Tim', 'tim@gmail.com','5713318824')
+#Library.borrow_book(db, 1, 3)
+Library.get_borrowed_books(db)
+
 
 
