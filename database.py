@@ -27,5 +27,31 @@ class Database:
 db = Database()
 
 # Book Class 
+class Book:
+  def __init__(self, title, author, genre) -> None:
+    self.title = title
+    self.author = author
+    self.genere = genre
 
+  def add_book(self, db):
+    query = 'INSERT INTO books (title, author, genre) VALUES(%s, %s, %s)'
+    db.execute(query, (self.title, self.author, self.genere))
+
+  @staticmethod # Static method don't have self at the first arg . Mean this method will not run the insances itself as the first arg. (It is like isolated function)
+  def remove_book(db, book_id):
+    query='DELETE from books WHERE book_id = %s'
+    db.execute(query, (book_id))
+
+  @staticmethod
+  def update_book(db, book_id, title=None, author=None, genre=None):
+    query='UPDATE books SET title=%s, author=%s, genre=%s WHERE book_id=%s'
+    db.execute(query, (title, author, genre, book_id))
+
+  @staticmethod
+  def check_availability(db, book_id):
+    query='SELECT availability FROM books WHERE book_id=%s'
+    result = db.fetch_all_data(query, (book_id))
+    return result
     
+
+
